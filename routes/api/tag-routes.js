@@ -9,7 +9,8 @@ router.get('/', (req, res) => {
     attributes: ['tag_name'],
     include: {
       model: Product,
-      attributes: ['product_name','price','stock']
+      attributes: ['product_name','price','stock'],
+      through: {attributes:[]}
     }
   })
   .then(tagData => res.json(tagData))
@@ -29,7 +30,8 @@ router.get('/:id', (req, res) => {
     },
     include: {
       model: Product,
-      attributes: ['product_name', 'price', 'stock']
+      attributes: ['product_name', 'price', 'stock'],
+      through: {attributes:[]}
     }
   })
   .then(tagData => {
@@ -48,13 +50,23 @@ router.get('/:id', (req, res) => {
 
 router.post('/', (req, res) => {
   // create a new tag
-  Tag.create({
-    tag_name: req.body.tag_name
+  Tag.create(req.body)
+  .then((tagData) => {
+    if(req.body.productIds !== undefined) {
+      const productTagIdArr = req.body.productIds.map((product_id) => {
+        return {
+          product_id,
+          tag_id: tagData.id,
+        };
+      });
+      return ProductTag.bulkCreate(productTagIdArr);
+    }
+    res.status(200).json(tagData);
   })
-  .then(tagData => res.json(tagData))
+  .then((productTagIds) => res.status(200).json(productTagIds))
   .catch(err => {
     console.log(err);
-    res.status(500).json(err);
+    res.status(400).json(err);
   })
 });
 

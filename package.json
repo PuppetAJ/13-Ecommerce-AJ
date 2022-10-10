@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "watch": "nodemon server.js",
+    "schema": "node db/index.js",
     "seed": "node seeds/index.js"
   },
   "repository": {
@@ -17,6 +18,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "nodemon": "^2.0.3"
   },
   "dependencies": {

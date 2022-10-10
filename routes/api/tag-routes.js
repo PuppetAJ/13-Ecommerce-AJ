@@ -8,6 +8,7 @@ router.get('/', (req, res) => {
   Tag.findAll({
     attributes: ['id', 'tag_name'],
     include: {
+      // Includes associated product data
       model: Product,
       attributes: ['product_name','price','stock'],
       // through: {attributes:[]}
@@ -29,6 +30,7 @@ router.get('/:id', (req, res) => {
       id: req.params.id
     },
     include: {
+      // Includes associated product data
       model: Product,
       attributes: ['product_name', 'price', 'stock'],
       // through: {attributes:[]}
@@ -52,7 +54,9 @@ router.post('/', (req, res) => {
   // create a new tag
   Tag.create(req.body)
   .then((tagData) => {
+    // Checks if the user included a productIds array
     if(req.body.productIds !== undefined) {
+      // If the user did include an array, then map the ids into an object, and bulkCreate those associations in the ProductTag model
       const productTagIdArr = req.body.productIds.map((product_id) => {
         return {
           product_id,
@@ -61,6 +65,7 @@ router.post('/', (req, res) => {
       });
       return ProductTag.bulkCreate(productTagIdArr);
     }
+    // If not send ok status with tagData
     res.status(200).json(tagData);
   })
   .then((productTagIds) => res.status(200).json(productTagIds))
@@ -78,17 +83,19 @@ router.put('/:id', (req, res) => {
     }
   })
   .then(tagData => {
+    // If the productIds array is NOT undefined, then find all the ProductTag instances where the tag_id are equal to the id in the paramater
     if (req.body.productIds !== undefined) {
       return ProductTag.findAll({ where: { tag_id: req.params.id } });
     }
-
-    res.json(tagData);
+    // otherwise, just send and ok status with the data
+    res.status(200).json(tagData);
   })
   .then((productTags) => {
+    // IF productTags is not undefined execute the following code
     if (productTags !== undefined) {
       // get a list of current product_ids
       const productTagIds = productTags.map(({ product_id }) => product_id);
-      // create filtered list of new tag_ids
+      // create filtered list of new product_ids
       const newProductTags = req.body.productIds
         .filter((product_id) => !productTagIds.includes(product_id))
         .map((product_id) => {
@@ -110,6 +117,7 @@ router.put('/:id', (req, res) => {
     }
   })
   .then((updatedProductTags) => {
+    // If data is passed send a json response
     if(updatedProductTags !== undefined) {
       res.json(updatedProductTags)
     }
@@ -140,4 +148,5 @@ router.delete('/:id', (req, res) => {
   });
 });
 
+// Export routes
 module.exports = router;

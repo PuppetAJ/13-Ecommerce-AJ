@@ -1,11 +1,14 @@
+// import important parts of sequelize library
 const { Model, DataTypes } = require('sequelize');
-
+// import our database connection from config.js
 const sequelize = require('../config/connection.js');
 
+// Initialize Category model (table) by extending off Sequelize's Model class
 class Category extends Model {}
 
 Category.init(
   {
+    // Columns defined
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -18,7 +21,9 @@ Category.init(
     }
   },
   {
+    // Passes imported connection
     sequelize,
+    // Rest is paramaters for our table
     timestamps: false,
     freezeTableName: true,
     underscored: true,
@@ -26,4 +31,5 @@ Category.init(
   }
 );
 
+// Export model
 module.exports = Category;

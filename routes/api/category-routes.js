@@ -1,3 +1,4 @@
+// Imports router and models
 const router = require('express').Router();
 const { Category, Product } = require('../../models');
 
@@ -6,6 +7,7 @@ const { Category, Product } = require('../../models');
 router.get('/', (req, res) => {
   // find all categories
   Category.findAll({
+    // Includes associated products
     include: [
       {
         model: Product,
@@ -27,6 +29,7 @@ router.get('/:id', (req, res) => {
     where: {
       id: req.params.id
     },
+    // Includes associated products
     include: [
       {
         model: Product,
@@ -96,4 +99,5 @@ router.delete('/:id', (req, res) => {
   })
 });
 
+// Exports routes
 module.exports = router;

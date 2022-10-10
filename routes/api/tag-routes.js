@@ -6,11 +6,11 @@ const { Tag, Product, ProductTag } = require('../../models');
 router.get('/', (req, res) => {
   // find all tags
   Tag.findAll({
-    attributes: ['tag_name'],
+    attributes: ['id', 'tag_name'],
     include: {
       model: Product,
       attributes: ['product_name','price','stock'],
-      through: {attributes:[]}
+      // through: {attributes:[]}
     }
   })
   .then(tagData => res.json(tagData))
@@ -24,14 +24,14 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
   // find a single tag by its `id`
   Tag.findOne({
-    attributes: ['tag_name'],
+    attributes: ['id', 'tag_name'],
     where: {
       id: req.params.id
     },
     include: {
       model: Product,
       attributes: ['product_name', 'price', 'stock'],
-      through: {attributes:[]}
+      // through: {attributes:[]}
     }
   })
   .then(tagData => {
@@ -74,15 +74,45 @@ router.put('/:id', (req, res) => {
   // update a tag's name by its `id` value
   Tag.update(req.body, {
     where: {
-      id: req.body.id
+      id: req.params.id
     }
   })
   .then(tagData => {
-    if (!tagData) {
-      res.status(404).json({ message: 'No tag found with this id' });
-      return;
+    if (req.body.productIds !== undefined) {
+      return ProductTag.findAll({ where: { tag_id: req.params.id } });
     }
+
     res.json(tagData);
+  })
+  .then((productTags) => {
+    if (productTags !== undefined) {
+      // get a list of current product_ids
+      const productTagIds = productTags.map(({ product_id }) => product_id);
+      // create filtered list of new tag_ids
+      const newProductTags = req.body.productIds
+        .filter((product_id) => !productTagIds.includes(product_id))
+        .map((product_id) => {
+          return {
+            product_id,
+            tag_id: req.params.id,
+          };
+        });
+      // figure out which ones to remove
+      const productTagsToRemove = productTags
+        .filter(({ product_id }) => !req.body.productIds.includes(product_id))
+        .map(({ id }) => id);
+
+      // run both actions
+      return Promise.all([
+        ProductTag.destroy({ where: { id: productTagsToRemove } }),
+        ProductTag.bulkCreate(newProductTags),
+      ]);
+    }
+  })
+  .then((updatedProductTags) => {
+    if(updatedProductTags !== undefined) {
+      res.json(updatedProductTags)
+    }
   })
   .catch(err => {
     console.log(err);
@@ -94,7 +124,7 @@ router.delete('/:id', (req, res) => {
   // delete on tag by its `id` value
   Tag.destroy({
     where: {
-      id: req.body.id
+      id: req.params.id
     }
   })
   .then(tagData => {
